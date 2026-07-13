@@ -642,15 +642,8 @@
         typeText(textEl, "One More Thing...", 100, () => {
             setTimeout(() => {
                 textEl.style.opacity = '0';
-                setTimeout(() => {
-                    typeText(textEl, "Because one surprise is never enough ❤️", 60, () => {
-                        setTimeout(() => {
-                            textEl.style.opacity = '0';
-                            textEl.style.display = 'none';
-                            setTimeout(playVideo2, 1000);
-                        }, 2000);
-                    });
-                }, 800);
+                textEl.style.display = 'none';
+                setTimeout(playVideo2, 1000);
             }, 1500);
         });
     }
