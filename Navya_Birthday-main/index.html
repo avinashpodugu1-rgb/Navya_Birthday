@@ -183,6 +183,13 @@
         </div>
     </div>
 
+    <!-- Premium Cinematic Surprise Ending Overlay -->
+    <div id="cinematic-overlay" class="cinematic-overlay">
+        <div id="cinematic-text" class="cinematic-text"></div>
+        <div id="gift-box-container" class="gift-box-container" style="display: none;"></div>
+        <div id="countdown-container" class="countdown-container" style="display: none;"></div>
+        <div id="video-container" class="video-container" style="display: none;"></div>
+    </div>
 </body>
 <script>
     let datetxt = "JULY 14";
@@ -248,9 +255,18 @@
     const activeImgElement = document.getElementById('album-active-img');
     const flipOverlay = document.getElementById('album-flip-overlay');
     let isFlipping = false;
+    let pageTurnCount = 0;
 
     function triggerPageTurn() {
         if (isFlipping) return;
+
+        // When the last photo in the "Your Aesthetics" album finishes, start cinematic ending
+        if (pageTurnCount >= albumImages.length - 1) {
+            clearInterval(albumInterval);
+            setTimeout(startCinematicEnding, 1200); // fade out after 1.2s
+            return;
+        }
+
         isFlipping = true;
 
         const nextImgIdx = (currentImgIdx + 1) % albumImages.length;
@@ -315,12 +331,526 @@
             flipOverlay.innerHTML = '';
             currentImgIdx = nextImgIdx;
             isFlipping = false;
+            pageTurnCount++;
         }, 1000); // matches 1.0s flip transition
     }
 
     // Auto slide timing:
-    // Pause = 1.0s, Page Turn = 1.0s. Total interval = 2.0s.
-    setInterval(triggerPageTurn, 2000);
+    // Display each image for 1.00s. Page-turn = 1.0s. Total interval = 2.0s.
+    let albumInterval = setInterval(triggerPageTurn, 2000);
+
+    /* ========================================================
+       CINEMATIC SURPRISE ENDING LOGIC
+       ======================================================== */
+    let audioCtx = null;
+    let synthInterval = null;
+    let lanternInterval = null;
+    let starInterval = null;
+
+    // Fade out any existing background music on the page
+    function fadeOutExistingMusic() {
+        const audios = document.querySelectorAll('audio');
+        audios.forEach(audio => {
+            let vol = audio.volume;
+            const interval = setInterval(() => {
+                if (vol > 0.05) {
+                    vol -= 0.05;
+                    audio.volume = vol;
+                } else {
+                    audio.volume = 0;
+                    audio.pause();
+                    clearInterval(interval);
+                }
+            }, 100);
+        });
+    }
+
+    // Fade in background music back to full volume
+    function fadeInExistingMusic() {
+        const audios = document.querySelectorAll('audio');
+        audios.forEach(audio => {
+            try {
+                audio.play();
+                let vol = 0;
+                audio.volume = vol;
+                const interval = setInterval(() => {
+                    if (vol < 0.95) {
+                        vol += 0.05;
+                        audio.volume = vol;
+                    } else {
+                        audio.volume = 1.0;
+                        clearInterval(interval);
+                    }
+                }, 100);
+            } catch(e) {
+                console.log("Failed playing audio on fade-in", e);
+            }
+        });
+    }
+
+    // Synthesize gentle piano ambient chord progression
+    function playPianoAmbience() {
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const chords = [
+                [130.81, 164.81, 196.00, 261.63], // C major
+                [146.83, 174.61, 220.00, 293.66], // D minor
+                [164.81, 196.00, 246.94, 329.63], // E minor
+                [174.61, 220.00, 261.63, 349.23]  // F major
+            ];
+            let chordIndex = 0;
+
+            function playChord() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                const notes = chords[chordIndex];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.1); // soft arpeggiated
+                    
+                    gainNode.gain.setValueAtTime(0, now);
+                    gainNode.gain.linearRampToValueAtTime(0.12, now + 1.0);
+                    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 5.0);
+                    
+                    osc.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 5.5);
+                });
+                chordIndex = (chordIndex + 1) % chords.length;
+            }
+
+            playChord();
+            synthInterval = setInterval(playChord, 5000);
+        } catch (e) {
+            console.log("Web Audio API not supported", e);
+        }
+    }
+
+    function stopPianoAmbience() {
+        if (synthInterval) {
+            clearInterval(synthInterval);
+            synthInterval = null;
+        }
+        if (audioCtx) {
+            audioCtx.close();
+            audioCtx = null;
+        }
+    }
+
+    // Synthesize magic chime/sparkle sound for gift opening
+    function playGiftOpenSound() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = ctx.currentTime;
+            const freqs = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
+            freqs.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                gain.gain.setValueAtTime(0, now + idx * 0.08);
+                gain.gain.linearRampToValueAtTime(0.08, now + idx * 0.08 + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.08 + 0.6);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + idx * 0.08);
+                osc.stop(now + idx * 0.08 + 0.7);
+            });
+        } catch(e) {
+            console.log("Web Audio not supported", e);
+        }
+    }
+
+    // Typewriter text printing utility
+    function typeText(element, text, speed, callback) {
+        element.innerHTML = '';
+        element.style.opacity = '1';
+        let i = 0;
+        function type() {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            } else if (callback) {
+                setTimeout(callback, 1000);
+            }
+        }
+        type();
+    }
+
+    // Particles/confetti/hearts burst logic
+    function triggerConfettiBurst() {
+        const overlay = document.getElementById('cinematic-overlay');
+        for (let i = 0; i < 80; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'cinematic-confetti';
+            const colors = ['#ffd700', '#ffb6c1', '#e6e6fa', '#ff7882', '#a18cd1', '#ffc0cb'];
+            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.top = '-10px';
+            confetti.style.width = Math.random() * 8 + 6 + 'px';
+            confetti.style.height = Math.random() * 12 + 6 + 'px';
+            confetti.style.opacity = Math.random() * 0.7 + 0.3;
+            confetti.style.borderRadius = '2px';
+            confetti.style.animation = `fallConfetti ${Math.random() * 3 + 2}s linear forwards`;
+            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            
+            overlay.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 5000);
+        }
+    }
+
+    function createHeartsBurst() {
+        const overlay = document.getElementById('cinematic-overlay');
+        for (let i = 0; i < 40; i++) {
+            const heart = document.createElement('div');
+            heart.className = 'cinematic-burst-heart';
+            heart.innerHTML = Math.random() > 0.5 ? '💖' : '❤️';
+            heart.style.left = '50vw';
+            heart.style.top = '50vh';
+            heart.style.fontSize = Math.random() * 20 + 15 + 'px';
+            
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * 150 + 50;
+            const tx = Math.cos(angle) * dist;
+            const ty = Math.sin(angle) * dist - 100;
+            
+            heart.style.setProperty('--tx', tx + 'px');
+            heart.style.setProperty('--ty', ty + 'px');
+            heart.style.animation = `burstHeart ${Math.random() * 1.5 + 1.0}s cubic-bezier(0.25, 1, 0.5, 1) forwards`;
+            
+            overlay.appendChild(heart);
+            setTimeout(() => heart.remove(), 2500);
+        }
+    }
+
+    // Lanterns & stars floating ambient animations
+    function startMagicalEffects() {
+        const overlay = document.getElementById('cinematic-overlay');
+        function createLantern() {
+            const lantern = document.createElement('div');
+            lantern.className = 'lantern';
+            lantern.innerHTML = '🏮';
+            lantern.style.left = Math.random() * 90 + 5 + 'vw';
+            lantern.style.bottom = '-50px';
+            lantern.style.fontSize = Math.random() * 15 + 20 + 'px';
+            
+            overlay.appendChild(lantern);
+            setTimeout(() => lantern.remove(), 16000);
+        }
+        
+        function createAmbientSparkle() {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'floating-particle star';
+            sparkle.innerHTML = Math.random() > 0.5 ? '✨' : '🌸';
+            sparkle.style.left = Math.random() * 100 + 'vw';
+            sparkle.style.bottom = '-10px';
+            sparkle.style.fontSize = Math.random() * 10 + 10 + 'px';
+            
+            overlay.appendChild(sparkle);
+            setTimeout(() => sparkle.remove(), 7000);
+        }
+
+        for (let i = 0; i < 5; i++) {
+            setTimeout(createLantern, Math.random() * 5000);
+        }
+        for (let i = 0; i < 15; i++) {
+            setTimeout(createAmbientSparkle, Math.random() * 5000);
+        }
+
+        lanternInterval = setInterval(createLantern, 3000);
+        starInterval = setInterval(createAmbientSparkle, 800);
+    }
+
+    function stopMagicalEffects() {
+        if (lanternInterval) {
+            clearInterval(lanternInterval);
+            lanternInterval = null;
+        }
+        if (starInterval) {
+            clearInterval(starInterval);
+            starInterval = null;
+        }
+        document.querySelectorAll('.lantern, .cinematic-overlay .floating-particle.star, .cinematic-confetti, .cinematic-burst-heart').forEach(el => {
+            el.remove();
+        });
+    }
+
+    // Step 1: Start cinematic ending (Fade to Black + Typewriter)
+    function startCinematicEnding() {
+        fadeOutExistingMusic();
+
+        const overlay = document.getElementById('cinematic-overlay');
+        overlay.classList.add('active');
+
+        playPianoAmbience();
+
+        const textEl = document.getElementById('cinematic-text');
+        textEl.style.display = 'block';
+
+        typeText(textEl, "Wait...", 100, () => {
+            setTimeout(() => {
+                textEl.style.opacity = '0';
+                setTimeout(() => {
+                    typeText(textEl, "I think I still have something left to show you...", 60, () => {
+                        setTimeout(() => {
+                            textEl.style.opacity = '0';
+                            setTimeout(() => {
+                                typeText(textEl, "This isn't the end...", 80, () => {
+                                    setTimeout(() => {
+                                        textEl.style.opacity = '0';
+                                        textEl.style.display = 'none';
+                                        setTimeout(revealGiftBox, 1000);
+                                    }, 1500);
+                                });
+                            }, 800);
+                        }, 2000);
+                    });
+                }, 800);
+            }, 1500);
+        });
+    }
+
+    // Step 2: Reveal the 3D Gift Box
+    function revealGiftBox() {
+        const giftContainer = document.getElementById('gift-box-container');
+        giftContainer.innerHTML = `
+            <div class="gift-box-wrapper">
+                <div class="gift-box" id="gift-box">
+                    <div class="gift-lid">
+                        <div class="lid-top"></div>
+                        <div class="lid-ribbon-x"></div>
+                        <div class="lid-ribbon-y"></div>
+                    </div>
+                    <div class="gift-body">
+                        <div class="body-ribbon-x"></div>
+                        <div class="body-ribbon-y"></div>
+                    </div>
+                    <div class="gift-bow">
+                        <div class="bow-left"></div>
+                        <div class="bow-right"></div>
+                    </div>
+                </div>
+                <p class="gift-prompt">🎁 Tap to Open Your Final Surprise</p>
+            </div>
+        `;
+        giftContainer.style.display = 'flex';
+        giftContainer.style.opacity = '0';
+        requestAnimationFrame(() => {
+            giftContainer.style.transition = 'opacity 1.5s ease';
+            giftContainer.style.opacity = '1';
+        });
+
+        const giftBox = document.getElementById('gift-box');
+        giftBox.addEventListener('click', openGift);
+    }
+
+    function openGift() {
+        const giftBox = document.getElementById('gift-box');
+        giftBox.classList.add('shake');
+        playGiftOpenSound();
+        
+        setTimeout(() => {
+            giftBox.classList.remove('shake');
+            giftBox.classList.add('open');
+            
+            stopPianoAmbience();
+            createHeartsBurst();
+            triggerConfettiBurst();
+
+            setTimeout(() => {
+                document.getElementById('gift-box-container').style.display = 'none';
+                startCountdown();
+            }, 1000);
+        }, 800);
+    }
+
+    // Step 3: Cinematic Countdown (3 -> 2 -> 1 -> ❤️)
+    function startCountdown() {
+        const countdownContainer = document.getElementById('countdown-container');
+        countdownContainer.style.display = 'flex';
+        
+        const steps = ["3", "2", "1", "❤️"];
+        let stepIdx = 0;
+
+        function nextNumber() {
+            if (stepIdx < steps.length) {
+                countdownContainer.innerHTML = `<span class="countdown-number">${steps[stepIdx]}</span>`;
+                stepIdx++;
+                setTimeout(nextNumber, 1500);
+            } else {
+                countdownContainer.style.display = 'none';
+                playVideo1();
+            }
+        }
+        nextNumber();
+    }
+
+    // Step 4: Play Video 1
+    function playVideo1() {
+        const videoContainer = document.getElementById('video-container');
+        videoContainer.innerHTML = `
+            <div class="video-player-container" id="player-container">
+                <video id="surprise-video-1" controls playsinline autoplay>
+                    <source src="https://drive.google.com/uc?export=download&id=1JVy2anO84ZBNgGNn09UkdSs4h-gArsDt" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        `;
+        videoContainer.style.display = 'flex';
+        
+        const player = document.getElementById('player-container');
+        const video = document.getElementById('surprise-video-1');
+        
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                player.classList.add('show');
+            }, 50);
+        });
+
+        video.onended = () => {
+            player.classList.remove('show');
+            setTimeout(() => {
+                videoContainer.style.display = 'none';
+                videoContainer.innerHTML = '';
+                showOneMoreThing();
+            }, 1000);
+        };
+    }
+
+    // Step 5: "One More Thing..." Typewriter
+    function showOneMoreThing() {
+        const textEl = document.getElementById('cinematic-text');
+        textEl.style.display = 'block';
+        textEl.innerHTML = '';
+        
+        typeText(textEl, "One More Thing...", 100, () => {
+            setTimeout(() => {
+                textEl.style.opacity = '0';
+                setTimeout(() => {
+                    typeText(textEl, "Because one surprise is never enough ❤️", 60, () => {
+                        setTimeout(() => {
+                            textEl.style.opacity = '0';
+                            textEl.style.display = 'none';
+                            setTimeout(playVideo2, 1000);
+                        }, 2000);
+                    });
+                }, 800);
+            }, 1500);
+        });
+    }
+
+    // Step 6: Play Video 2
+    function playVideo2() {
+        const videoContainer = document.getElementById('video-container');
+        videoContainer.innerHTML = `
+            <div class="video-player-container" id="player-container2">
+                <video id="surprise-video-2" controls playsinline autoplay>
+                    <source src="https://drive.google.com/uc?export=download&id=1whDDy6SZIlXwA1uJumZC_9rmUiHUuADH" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        `;
+        videoContainer.style.display = 'flex';
+        
+        const player = document.getElementById('player-container2');
+        const video = document.getElementById('surprise-video-2');
+        
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                player.classList.add('show');
+            }, 50);
+        });
+
+        video.onended = () => {
+            player.classList.remove('show');
+            setTimeout(() => {
+                videoContainer.style.display = 'none';
+                videoContainer.innerHTML = '';
+                showFinalTypewriter();
+            }, 1000);
+        };
+    }
+
+    // Step 7: Final Typewriter messages
+    function showFinalTypewriter() {
+        const textEl = document.getElementById('cinematic-text');
+        textEl.style.display = 'block';
+        textEl.innerHTML = '';
+        
+        typeText(textEl, "❤️ Thank you for being a part of my life.", 60, () => {
+            setTimeout(() => {
+                textEl.style.opacity = '0';
+                setTimeout(() => {
+                    typeText(textEl, "May your smile never fade.", 80, () => {
+                        setTimeout(() => {
+                            textEl.style.opacity = '0';
+                            setTimeout(() => {
+                                typeText(textEl, "Happy Birthday Once Again, Navya 🎂✨", 70, () => {
+                                    setTimeout(() => {
+                                        textEl.style.opacity = '0';
+                                        textEl.style.display = 'none';
+                                        showMagicalEnding();
+                                    }, 3000);
+                                });
+                            }, 800);
+                        }, 2000);
+                    });
+                }, 800);
+            }, 2000);
+        });
+    }
+
+    // Step 8: Magical Ending with lanterns, ambient music & Relive memories button
+    function showMagicalEnding() {
+        fadeInExistingMusic();
+        startMagicalEffects();
+
+        const textEl = document.getElementById('cinematic-text');
+        textEl.style.display = 'block';
+        textEl.innerHTML = `
+            <div class="ending-container" id="ending-container">
+                <h2 class="ending-title">Happy Birthday Navya 🌸</h2>
+                <button id="relive-btn" class="relive-btn">🔄 Relive the Memories</button>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            const ending = document.getElementById('ending-container');
+            if (ending) ending.style.opacity = '1';
+        }, 100);
+
+        document.getElementById('relive-btn').addEventListener('click', reliveMemories);
+    }
+
+    function reliveMemories() {
+        const overlay = document.getElementById('cinematic-overlay');
+        overlay.classList.remove('active');
+        
+        stopMagicalEffects();
+
+        setTimeout(() => {
+            overlay.innerHTML = `
+                <div id="cinematic-text" class="cinematic-text"></div>
+                <div id="gift-box-container" class="gift-box-container" style="display: none;"></div>
+                <div id="countdown-container" class="countdown-container" style="display: none;"></div>
+                <div id="video-container" class="video-container" style="display: none;"></div>
+            `;
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Restart photo album
+            pageTurnCount = 0;
+            currentImgIdx = 0;
+            activeImgElement.src = albumImages[0];
+            activeImgElement.style.opacity = '1';
+            albumInterval = setInterval(triggerPageTurn, 2000);
+        }, 2000);
+    }
 </script>
 
 </html>
