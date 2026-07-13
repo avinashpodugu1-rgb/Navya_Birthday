@@ -1614,7 +1614,7 @@ body {
     100% { transform: scale(1.4); opacity: 0; filter: blur(12px); }
 }
 
-/* Video Container & Responsive Player */
+/* Video Container & Responsive Player (Auto-sized to prevent any control bar/navbar clipping) */
 .video-container {
     display: flex !important;
     justify-content: center !important;
@@ -1628,13 +1628,14 @@ body {
 .video-player-container {
     position: relative !important;
     width: 90% !important;
-    max-width: 700px !important;
+    max-width: 640px !important;
+    max-height: 80vh !important;
     background: rgba(255, 255, 255, 0.08) !important;
     backdrop-filter: blur(25px) !important;
     -webkit-backdrop-filter: blur(25px) !important;
     border: 2px solid rgba(255, 255, 255, 0.2) !important;
     border-radius: 24px !important;
-    padding: 10px !important;
+    padding: 8px !important;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 35px rgba(255, 182, 193, 0.35) !important;
     opacity: 0 !important;
     transform: scale(0.95) !important;
@@ -1652,10 +1653,12 @@ body {
 
 .video-player-container video {
     width: 100% !important;
-    height: auto !important;
+    max-height: calc(80vh - 16px) !important;
+    object-fit: contain !important; /* Preserves aspect ratio, fits perfectly, reveals native controls completely */
     border-radius: 16px !important;
     display: block !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    background: #000000 !important;
 }
 
 /* Floating Lanterns Animation */
@@ -1726,52 +1729,95 @@ body {
     }
 }
 
-/* Magical Ending Relive Button styling */
-.ending-container {
+/* Ending Glassmorphic Card (Happy Birthday Wishes in the middle of card) */
+.cinematic-card {
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(25px) !important;
+    -webkit-backdrop-filter: blur(25px) !important;
+    border: 2px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 24px !important;
+    padding: 40px 30px !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 35px rgba(255, 182, 193, 0.3) !important;
+    max-width: 90% !important;
+    width: 440px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    opacity: 0 !important;
-    transition: opacity 2.0s ease !important;
     z-index: 10 !important;
-}
-
-.ending-title {
-    font-family: 'Dancing Script', cursive !important;
-    font-size: 42px !important;
-    color: #ffffff !important;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.8), 0 0 30px rgba(255, 182, 193, 0.5) !important;
-    margin-bottom: 30px !important;
     text-align: center !important;
+    box-sizing: border-box !important;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 1.5s cubic-bezier(0.25, 1, 0.5, 1), transform 1.5s cubic-bezier(0.25, 1, 0.5, 1) !important;
 }
 
-.relive-btn {
+.cinematic-card.show {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+}
+
+.cinematic-card-text {
+    font-family: 'Dancing Script', cursive !important;
+    font-size: 28px !important;
+    color: #ffffff !important;
+    line-height: 1.6 !important;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 182, 193, 0.4) !important;
+    transition: opacity 0.6s ease !important;
+}
+
+.cinematic-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 15px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    opacity: 0;
+}
+
+/* Relive / Go Back Buttons Styling */
+.relive-btn, .back-home-btn {
     font-family: 'Poppins', sans-serif !important;
     font-weight: 600 !important;
-    font-size: 16px !important;
+    font-size: 14px !important;
     color: #ffffff !important;
-    background: linear-gradient(135deg, #FF7882, #a18cd1) !important;
     border: 2px solid rgba(255, 255, 255, 0.4) !important;
     outline: none !important;
-    padding: 12px 30px !important;
+    padding: 11px 24px !important;
     border-radius: 50px !important;
     cursor: pointer !important;
-    box-shadow: 0 5px 15px rgba(255, 120, 130, 0.4), 0 0 20px rgba(255, 255, 255, 0.2) !important;
     transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1) !important;
-    z-index: 10 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
+    box-sizing: border-box !important;
+}
+
+.relive-btn {
+    background: linear-gradient(135deg, #FF7882, #a18cd1) !important;
+    box-shadow: 0 5px 15px rgba(255, 120, 130, 0.3) !important;
 }
 
 .relive-btn:hover {
-    transform: translateY(-3px) scale(1.05) !important;
-    box-shadow: 0 8px 25px rgba(255, 120, 130, 0.6), 0 0 30px rgba(255, 255, 255, 0.4) !important;
-    background: linear-gradient(135deg, #ff8b94, #b19ffb) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(255, 120, 130, 0.5), 0 0 15px rgba(255, 255, 255, 0.3) !important;
 }
 
-.relive-btn:active {
-    transform: translateY(1px) scale(0.98) !important;
+.relive-btn:active, .back-home-btn:active {
+    transform: translateY(1px) !important;
+}
+
+.back-home-btn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(5px) !important;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+.back-home-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2) !important;
 }

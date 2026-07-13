@@ -186,6 +186,10 @@
     <!-- Premium Cinematic Surprise Ending Overlay -->
     <div id="cinematic-overlay" class="cinematic-overlay">
         <div id="cinematic-text" class="cinematic-text"></div>
+        <div id="cinematic-card" class="cinematic-card" style="display: none;">
+            <div id="cinematic-card-text" class="cinematic-card-text"></div>
+            <div id="cinematic-buttons" class="cinematic-buttons" style="display: none; margin-top: 25px;"></div>
+        </div>
         <div id="gift-box-container" class="gift-box-container" style="display: none;"></div>
         <div id="countdown-container" class="countdown-container" style="display: none;"></div>
         <div id="video-container" class="video-container" style="display: none;"></div>
@@ -776,26 +780,31 @@
         };
     }
 
-    // Step 7: Final Typewriter messages
+    // Step 7: Final Typewriter messages (inside Card)
     function showFinalTypewriter() {
         const textEl = document.getElementById('cinematic-text');
-        textEl.style.display = 'block';
-        textEl.innerHTML = '';
+        textEl.style.display = 'none'; // Ensure standalone text is hidden
+
+        const cardEl = document.getElementById('cinematic-card');
+        const cardTextEl = document.getElementById('cinematic-card-text');
         
-        typeText(textEl, "❤️ Thank you for being a part of my life.", 60, () => {
+        cardEl.style.display = 'flex';
+        setTimeout(() => {
+            cardEl.classList.add('show');
+        }, 100);
+
+        typeText(cardTextEl, "❤️ Thank you for being a part of my life.", 60, () => {
             setTimeout(() => {
-                textEl.style.opacity = '0';
+                cardTextEl.style.opacity = '0';
                 setTimeout(() => {
-                    typeText(textEl, "May your smile never fade.", 80, () => {
+                    typeText(cardTextEl, "May your smile never fade.", 80, () => {
                         setTimeout(() => {
-                            textEl.style.opacity = '0';
+                            cardTextEl.style.opacity = '0';
                             setTimeout(() => {
-                                typeText(textEl, "Happy Birthday Once Again, Navya 🎂✨", 70, () => {
+                                typeText(cardTextEl, "Happy Birthday Once Again, Navya 🎂✨", 70, () => {
                                     setTimeout(() => {
-                                        textEl.style.opacity = '0';
-                                        textEl.style.display = 'none';
                                         showMagicalEnding();
-                                    }, 3000);
+                                    }, 1000);
                                 });
                             }, 800);
                         }, 2000);
@@ -805,26 +814,25 @@
         });
     }
 
-    // Step 8: Magical Ending with lanterns, ambient music & Relive memories button
+    // Step 8: Magical Ending with lanterns, ambient music & Relive / Back Home buttons inside card
     function showMagicalEnding() {
         fadeInExistingMusic();
         startMagicalEffects();
 
-        const textEl = document.getElementById('cinematic-text');
-        textEl.style.display = 'block';
-        textEl.innerHTML = `
-            <div class="ending-container" id="ending-container">
-                <h2 class="ending-title">Happy Birthday Navya 🌸</h2>
-                <button id="relive-btn" class="relive-btn">🔄 Relive the Memories</button>
-            </div>
+        const buttonsEl = document.getElementById('cinematic-buttons');
+        buttonsEl.innerHTML = `
+            <button id="relive-btn" class="relive-btn">🔄 Relive the Memories</button>
+            <button id="back-home-btn" class="back-home-btn">🏠 Go Back to Home</button>
         `;
+        buttonsEl.style.display = 'flex';
         
-        setTimeout(() => {
-            const ending = document.getElementById('ending-container');
-            if (ending) ending.style.opacity = '1';
-        }, 100);
+        requestAnimationFrame(() => {
+            buttonsEl.style.transition = 'opacity 1.5s ease';
+            buttonsEl.style.opacity = '1';
+        });
 
         document.getElementById('relive-btn').addEventListener('click', reliveMemories);
+        document.getElementById('back-home-btn').addEventListener('click', goBackToHome);
     }
 
     function reliveMemories() {
@@ -834,13 +842,7 @@
         stopMagicalEffects();
 
         setTimeout(() => {
-            overlay.innerHTML = `
-                <div id="cinematic-text" class="cinematic-text"></div>
-                <div id="gift-box-container" class="gift-box-container" style="display: none;"></div>
-                <div id="countdown-container" class="countdown-container" style="display: none;"></div>
-                <div id="video-container" class="video-container" style="display: none;"></div>
-            `;
-            
+            resetCinematicOverlay();
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
             // Restart photo album
@@ -850,6 +852,44 @@
             activeImgElement.style.opacity = '1';
             albumInterval = setInterval(triggerPageTurn, 2000);
         }, 2000);
+    }
+
+    function goBackToHome() {
+        const overlay = document.getElementById('cinematic-overlay');
+        overlay.classList.remove('active');
+        
+        stopMagicalEffects();
+
+        // Close the mailbox overlay to return to the home screen
+        const boxmail = document.querySelector('.boxMail');
+        const mailBox = document.querySelector('.mail');
+        if (boxmail) boxmail.classList.remove('active');
+        if (mailBox) mailBox.classList.remove('active');
+
+        setTimeout(() => {
+            resetCinematicOverlay();
+            
+            // Reset slideshow indices but do not scroll top of mailbox (envelope is closed!)
+            pageTurnCount = 0;
+            currentImgIdx = 0;
+            activeImgElement.src = albumImages[0];
+            activeImgElement.style.opacity = '1';
+            albumInterval = setInterval(triggerPageTurn, 2000);
+        }, 2000);
+    }
+
+    function resetCinematicOverlay() {
+        const overlay = document.getElementById('cinematic-overlay');
+        overlay.innerHTML = `
+            <div id="cinematic-text" class="cinematic-text"></div>
+            <div id="cinematic-card" class="cinematic-card" style="display: none;">
+                <div id="cinematic-card-text" class="cinematic-card-text"></div>
+                <div id="cinematic-buttons" class="cinematic-buttons" style="display: none; margin-top: 25px;"></div>
+            </div>
+            <div id="gift-box-container" class="gift-box-container" style="display: none;"></div>
+            <div id="countdown-container" class="countdown-container" style="display: none;"></div>
+            <div id="video-container" class="video-container" style="display: none;"></div>
+        `;
     }
 </script>
 
