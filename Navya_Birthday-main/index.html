@@ -218,17 +218,6 @@
 
 
 
-    let mailBox = document.querySelector('.mail')
-    let boxmail = document.querySelector('.boxMail')
-    var close = document.querySelector('.fa-xmark')
-    mailBox.onclick = function () {
-        mailBox.classList.toggle('active')
-        boxmail.classList.add('active')
-    }
-
-    close.addEventListener('click', function () {
-        boxmail.classList.remove('active')
-    })
 
     // --- 3D Page Flip Photo Album Script ---
     const albumImages = [
@@ -339,9 +328,8 @@
         }, 1000); // matches 1.0s flip transition
     }
 
-    // Auto slide timing:
-    // Display each image for 1.00s. Page-turn = 1.0s. Total interval = 2.0s.
-    let albumInterval = setInterval(triggerPageTurn, 2000);
+    // Initialize slideshow interval reference
+    let albumInterval = null;
 
     /* ========================================================
        CINEMATIC SURPRISE ENDING LOGIC
@@ -810,6 +798,29 @@
             <div id="video-container" class="video-container" style="display: none;"></div>
         `;
     }
+
+    // Mailbox interaction & Auto-Slideshow control
+    const mailBox = document.querySelector('.mail');
+    const boxmail = document.querySelector('.boxMail');
+    const close = document.querySelector('.fa-xmark');
+
+    mailBox.onclick = function () {
+        mailBox.classList.toggle('active');
+        boxmail.classList.add('active');
+        
+        // Start slideshow from first photo when mailbox is opened
+        clearInterval(albumInterval);
+        pageTurnCount = 0;
+        currentImgIdx = 0;
+        activeImgElement.src = albumImages[0];
+        activeImgElement.style.opacity = '1';
+        albumInterval = setInterval(triggerPageTurn, 2000);
+    };
+
+    close.addEventListener('click', function () {
+        boxmail.classList.remove('active');
+        clearInterval(albumInterval);
+    });
 </script>
 
 </html>
