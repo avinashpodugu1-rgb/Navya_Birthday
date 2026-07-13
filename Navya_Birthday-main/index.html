@@ -603,95 +603,14 @@
                     typeText(textEl, "I think I still have something left to show you...", 60, () => {
                         setTimeout(() => {
                             textEl.style.opacity = '0';
-                            setTimeout(() => {
-                                typeText(textEl, "This isn't the end...", 80, () => {
-                                    setTimeout(() => {
-                                        textEl.style.opacity = '0';
-                                        textEl.style.display = 'none';
-                                        setTimeout(revealGiftBox, 1000);
-                                    }, 1500);
-                                });
-                            }, 800);
+                            textEl.style.display = 'none';
+                            stopPianoAmbience();
+                            setTimeout(playVideo1, 1000); // Transition directly to Video 1
                         }, 2000);
                     });
                 }, 800);
             }, 1500);
         });
-    }
-
-    // Step 2: Reveal the 3D Gift Box
-    function revealGiftBox() {
-        const giftContainer = document.getElementById('gift-box-container');
-        giftContainer.innerHTML = `
-            <div class="gift-box-wrapper">
-                <div class="gift-box" id="gift-box">
-                    <div class="gift-lid">
-                        <div class="lid-top"></div>
-                        <div class="lid-ribbon-x"></div>
-                        <div class="lid-ribbon-y"></div>
-                    </div>
-                    <div class="gift-body">
-                        <div class="body-ribbon-x"></div>
-                        <div class="body-ribbon-y"></div>
-                    </div>
-                    <div class="gift-bow">
-                        <div class="bow-left"></div>
-                        <div class="bow-right"></div>
-                    </div>
-                </div>
-                <p class="gift-prompt">🎁 Tap to Open Your Final Surprise</p>
-            </div>
-        `;
-        giftContainer.style.display = 'flex';
-        giftContainer.style.opacity = '0';
-        requestAnimationFrame(() => {
-            giftContainer.style.transition = 'opacity 1.5s ease';
-            giftContainer.style.opacity = '1';
-        });
-
-        const giftBox = document.getElementById('gift-box');
-        giftBox.addEventListener('click', openGift);
-    }
-
-    function openGift() {
-        const giftBox = document.getElementById('gift-box');
-        giftBox.classList.add('shake');
-        playGiftOpenSound();
-        
-        setTimeout(() => {
-            giftBox.classList.remove('shake');
-            giftBox.classList.add('open');
-            
-            stopPianoAmbience();
-            createHeartsBurst();
-            triggerConfettiBurst();
-
-            setTimeout(() => {
-                document.getElementById('gift-box-container').style.display = 'none';
-                startCountdown();
-            }, 1000);
-        }, 800);
-    }
-
-    // Step 3: Cinematic Countdown (3 -> 2 -> 1 -> ❤️)
-    function startCountdown() {
-        const countdownContainer = document.getElementById('countdown-container');
-        countdownContainer.style.display = 'flex';
-        
-        const steps = ["3", "2", "1", "❤️"];
-        let stepIdx = 0;
-
-        function nextNumber() {
-            if (stepIdx < steps.length) {
-                countdownContainer.innerHTML = `<span class="countdown-number">${steps[stepIdx]}</span>`;
-                stepIdx++;
-                setTimeout(nextNumber, 1500);
-            } else {
-                countdownContainer.style.display = 'none';
-                playVideo1();
-            }
-        }
-        nextNumber();
     }
 
     // Step 4: Play Video 1
